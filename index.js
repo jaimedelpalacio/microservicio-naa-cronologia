@@ -22,6 +22,17 @@ function limpiarTexto(texto) {
   return texto.replace(/\s+/g, ' ').trim();
 }
 
+// Función para limpiar el campo motivo
+function limpiarMotivo(motivo) {
+  return motivo
+    .replace(/Página \d+/gi, '')
+    .replace(/DIRECCIÓN GENERAL DE COORDINACIÓN Y ESTUDIOS/gi, '')
+    .replace(/SECRETARÍA DE ESTADO DE SEGURIDAD/gi, '')
+    .replace(/MINISTERIO DEL INTERIOR/gi, '')
+    .replace(/NIVEL DE ACTIVACIÓN MOTIVO FECHA CRONOLOGÍA DE LOS NIVELES DE ALERTA ANTITERRORISTA \[NAA\]/gi, '')
+    .trim();
+}
+
 // Ruta para obtener la última fila del PDF
 app.get('/ultima-fila', async (req, res) => {
   try {
@@ -40,6 +51,17 @@ app.get('/ultima-fila', async (req, res) => {
 
     for (let i = 0; i < lineas.length; i++) {
       const linea = lineas[i].trim();
+
+      // Omitir líneas del pie de página
+      if (
+        /^Página \d+/i.test(linea) ||
+        linea.includes('DIRECCIÓN GENERAL DE COORDINACIÓN Y ESTUDIOS') ||
+        linea.includes('SECRETARÍA DE ESTADO DE SEGURIDAD') ||
+        linea.includes('MINISTERIO DEL INTERIOR') ||
+        linea.includes('NIVEL DE ACTIVACIÓN MOTIVO FECHA CRONOLOGÍA DE LOS NIVELES DE ALERTA ANTITERRORISTA [NAA]')
+      ) {
+        continue;
+      }
 
       // Detectar líneas que representan una fecha
       if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(linea) || /^\w+ \d{4}$/.test(linea)) {
@@ -81,7 +103,7 @@ app.get('/ultima-fila', async (req, res) => {
     // Responder con la información de la última fila
     res.json({
       fecha: limpiarTexto(ultima.fecha),
-      motivo: limpiarTexto(ultima.motivo),
+      motivo: limpiarMotivo(ultima.motivo),
       nivel: ultima.nivel
     });
 
